@@ -1,8 +1,8 @@
 """
-Transformation classes for the image puzzle.
+Transformation classes for the HIT137 Assignment 3 puzzle.
 
-This file contains the different ways a puzzle tile
-can be changed during the game.
+This module demonstrates inheritance and polymorphism.
+Each transformation provides an apply() method.
 """
 
 import random
@@ -14,15 +14,20 @@ import numpy as np
 class TileTransformation:
     """Base class for all tile transformations."""
 
-    def apply(self, tile):
-        """Apply a transformation to a tile."""
+    def apply(self, tiles, index=None, other_index=None):
+        """
+        Apply a transformation.
+
+        Subclasses override this method to provide
+        their own transformation behaviour.
+        """
         raise NotImplementedError(
-            "This method must be implemented by a subclass."
+            "Subclasses must implement apply()."
         )
 
 
 class RotateTransformation(TileTransformation):
-    """Rotate a tile by 90, 180 or 270 degrees."""
+    """Rotate one tile by 90, 180 or 270 degrees."""
 
     def __init__(self, angle=None):
         if angle is None:
@@ -35,19 +40,24 @@ class RotateTransformation(TileTransformation):
 
         self.angle = angle
 
-    def apply(self, tile):
-        """Rotate the tile clockwise."""
+    def apply(self, tiles, index=None, other_index=None):
+        """Rotate the selected tile clockwise."""
 
-        number_of_rotations = self.angle // 90
+        if index is None:
+            raise ValueError(
+                "A tile index is required for rotation."
+            )
 
-        tile.image = np.rot90(
-            tile.image,
-            -number_of_rotations
+        rotations = self.angle // 90
+
+        tiles[index].image = np.rot90(
+            tiles[index].image,
+            -rotations
         ).copy()
 
 
 class FlipTransformation(TileTransformation):
-    """Flip a tile horizontally or vertically."""
+    """Flip one tile horizontally or vertically."""
 
     def __init__(self, direction=None):
         if direction is None:
@@ -57,30 +67,47 @@ class FlipTransformation(TileTransformation):
 
         if direction not in ["horizontal", "vertical"]:
             raise ValueError(
-                "Flip direction must be horizontal or vertical."
+                "Flip direction must be horizontal "
+                "or vertical."
             )
 
         self.direction = direction
 
-    def apply(self, tile):
-        """Flip the tile in the selected direction."""
+    def apply(self, tiles, index=None, other_index=None):
+        """Flip the selected tile."""
+
+        if index is None:
+            raise ValueError(
+                "A tile index is required for flipping."
+            )
 
         if self.direction == "horizontal":
-            tile.image = cv2.flip(tile.image, 1)
+            tiles[index].image = cv2.flip(
+                tiles[index].image,
+                1
+            )
         else:
-            tile.image = cv2.flip(tile.image, 0)
+            tiles[index].image = cv2.flip(
+                tiles[index].image,
+                0
+            )
 
 
 class SwapTransformation(TileTransformation):
-    """Swap the positions of two tiles."""
+    """Swap two tiles."""
 
-    def apply(self, tiles, first, second):
-        """Exchange the positions of two tiles."""
+    def apply(self, tiles, index=None, other_index=None):
+        """Exchange two tile positions."""
 
-        if first == second:
+        if index is None or other_index is None:
+            raise ValueError(
+                "Two tile indices are required for swapping."
+            )
+
+        if index == other_index:
             return
 
-        tiles[first], tiles[second] = (
-            tiles[second],
-            tiles[first]
+        tiles[index], tiles[other_index] = (
+            tiles[other_index],
+            tiles[index]
         )

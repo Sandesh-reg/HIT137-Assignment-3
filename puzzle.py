@@ -1,8 +1,8 @@
 """
-Puzzle logic for the image scrambling game.
+Puzzle logic for the HIT137 Assignment 3 image puzzle.
 
-This file contains the Tile and Puzzle classes.
-The classes manage the puzzle state, transformations,
+This module contains the Tile and Puzzle classes.
+The classes manage puzzle state, transformations,
 moves, hints and solving.
 """
 
@@ -22,26 +22,22 @@ class Tile:
 
     def __init__(self, tile_id, image):
         self.tile_id = tile_id
-
-        # The position where this tile originally belonged.
         self.home_position = tile_id
 
-        # Keep a copy of the original image so the tile
-        # can be restored later.
+        # Keep the original image for comparison and solving.
         self.original_image = image.copy()
 
-        # Current version of the tile.
+        # Current image after transformations.
         self.image = image.copy()
 
     def reset(self):
-        """Return the tile to its original orientation."""
-
+        """Restore the tile to its original orientation."""
         self.image = self.original_image.copy()
 
     def is_correct(self, current_position):
         """
-        Check whether the tile is in its original position
-        and has its original orientation.
+        Check whether the tile is in the correct position
+        and has the correct orientation.
         """
 
         correct_position = (
@@ -62,7 +58,6 @@ class Tile:
 class Puzzle:
     """Manage the state and actions of the puzzle."""
 
-    # Number of transformations required for each grid.
     TRANSFORMATION_COUNTS = {
         3: 6,
         4: 12,
@@ -70,7 +65,7 @@ class Puzzle:
     }
 
     def __init__(self, grid_size=3):
-        """Create a new puzzle."""
+        """Create a puzzle with a 3x3, 4x4 or 5x5 grid."""
 
         if grid_size not in [3, 4, 5]:
             raise ValueError(
@@ -78,8 +73,6 @@ class Puzzle:
             )
 
         self.grid_size = grid_size
-
-        # The list of tiles currently in the puzzle.
         self.tiles = []
 
         # Game statistics.
@@ -94,12 +87,11 @@ class Puzzle:
     @property
     def tile_count(self):
         """Return the total number of tiles."""
-
         return self.grid_size * self.grid_size
 
     @property
     def tiles_left(self):
-        """Return how many tiles are still incorrect."""
+        """Return the number of tiles that are incorrect."""
 
         incorrect_tiles = 0
 
@@ -114,12 +106,12 @@ class Puzzle:
         Give the puzzle its tiles.
 
         This is normally called after the image processor
-        has divided the selected image into pieces.
+        divides the selected image into pieces.
         """
 
         self.tiles = tiles
 
-        # Start the game with fresh statistics.
+        # Reset game state for a new image.
         self.moves = 0
         self.hints_used = 0
         self.finished = False
@@ -129,19 +121,22 @@ class Puzzle:
         """
         Randomly transform the puzzle.
 
-        The required number of transformations is:
+        Required transformation counts:
 
         3x3 -> 6
         4x4 -> 12
         5x5 -> 20
+
+        Each tile is selected as a primary transformation
+        target at most once.
         """
 
         transformation_count = (
             self.TRANSFORMATION_COUNTS[self.grid_size]
         )
 
-        # Make sure all three transformation types
-        # are included in every scramble.
+        # Guarantee that all three required
+        # transformation types are represented.
         transformation_types = [
             "swap",
             "rotate",
@@ -157,29 +152,37 @@ class Puzzle:
 
         random.shuffle(transformation_types)
 
-        # Keep track of tile positions that have been
-        # selected as transformation targets.
-        available_positions = list(
-            range(self.tile_count)
-        )
+        # Track tile IDs rather than only positions.
+        # This prevents the same tile from being selected
+        # as the main transformation target twice.
+        available_tile_ids = [
+            tile.tile_id
+            for tile in self.tiles
+        ]
 
-        random.shuffle(available_positions)
+        random.shuffle(available_tile_ids)
 
         for transformation_type in transformation_types:
 
-            if not available_positions:
+            if not available_tile_ids:
                 break
 
-            current_position = (
-                available_positions.pop()
+            target_tile_id = available_tile_ids.pop()
+
+            target_position = self._find_tile_position(
+                target_tile_id
             )
+
+            if target_position is None:
+                continue
 
             if transformation_type == "rotate":
 
                 transformation = RotateTransformation()
 
                 transformation.apply(
-                    self.tiles[current_position]
+                    self.tiles,
+                    target_position
                 )
 
             elif transformation_type == "flip":
@@ -187,17 +190,21 @@ class Puzzle:
                 transformation = FlipTransformation()
 
                 transformation.apply(
-                    self.tiles[current_position]
+                    self.tiles,
+                    target_position
                 )
 
             else:
-                # Swap the selected tile with another
-                # different tile.
+
+                # Choose another tile position.
                 other_positions = [
                     position
                     for position in range(self.tile_count)
-                    if position != current_position
+                    if position != target_position
                 ]
+
+                if not other_positions:
+                    continue
 
                 other_position = random.choice(
                     other_positions
@@ -207,12 +214,12 @@ class Puzzle:
 
                 transformation.apply(
                     self.tiles,
-                    current_position,
+                    target_position,
                     other_position
                 )
 
-        # Avoid the unlikely situation where random
-        # transformations leave the puzzle solved.
+        # Extremely unlikely safety check:
+        # a scrambled puzzle should not start solved.
         if self.is_solved() and self.tile_count >= 2:
 
             first, second = random.sample(
@@ -225,6 +232,16 @@ class Puzzle:
                 first,
                 second
             )
+
+    def _find_tile_position(self, tile_id):
+        """Return the current position of a tile."""
+
+        for position, tile in enumerate(self.tiles):
+
+            if tile.tile_id == tile_id:
+                return position
+
+        return None
 
     def swap(self, first, second):
         """Swap two tiles during gameplay."""
@@ -243,8 +260,11 @@ class Puzzle:
     def rotate(self, index):
         """Rotate one tile 90 degrees clockwise."""
 
-        RotateTransformation(90).apply(
-            self.tiles[index]
+        RotateTransformation(
+            90
+        ).apply(
+            self.tiles,
+            index
         )
 
         self.record_move()
@@ -255,17 +275,18 @@ class Puzzle:
         FlipTransformation(
             "horizontal"
         ).apply(
-            self.tiles[index]
+            self.tiles,
+            index
         )
 
         self.record_move()
 
     def record_move(self):
-        """Record a player action."""
+        """Record one player action."""
 
         self.moves += 1
 
-        # A hint is only shown until the next move.
+        # A hint disappears after the next move.
         self.hint_positions = None
 
     def is_solved(self):
@@ -275,10 +296,10 @@ class Puzzle:
 
     def get_hint(self):
         """
-        Return the current position and correct position
+        Return the current and correct position
         of one incorrect tile.
 
-        A maximum of three hints can be used per puzzle.
+        A maximum of three hints is allowed.
         """
 
         if self.hints_used >= self.max_hints:
@@ -293,7 +314,6 @@ class Puzzle:
                     (position, tile)
                 )
 
-        # There is nothing to hint if the puzzle is solved.
         if not incorrect_tiles:
             return None
 
@@ -314,8 +334,8 @@ class Puzzle:
         """
         Instantly solve the puzzle.
 
-        The tiles are restored to their original
-        orientation and placed in their home positions.
+        Tiles are restored to their original orientation
+        and placed into their home positions.
         """
 
         correct_order = [
@@ -332,8 +352,7 @@ class Puzzle:
 
         self.tiles = correct_order
 
-        # Solve clears the player's move count.
+        # Solve clears the player's score.
         self.moves = 0
-
         self.hint_positions = None
         self.finished = True
