@@ -2,44 +2,45 @@
 
 ## Image Scramble Puzzle
 
-A Tkinter desktop puzzle application using OpenCV and NumPy.
+A desktop image-scramble puzzle developed for HIT137 Group Assignment 3.
 
-### Features
-- OOP with encapsulation, inheritance and polymorphism
-- JPG, PNG and BMP image loading
-- 3x3, 4x4 and 5x5 grids
-- Aspect-ratio preserving resize and even cropping
+The application uses Python, Tkinter, OpenCV and NumPy. The project demonstrates
+object-oriented programming, image processing and graphical user interaction.
+
+## Features
+
+- Object-oriented design using classes and inheritance
+- Encapsulation of puzzle and tile state
+- Polymorphism through tile transformation classes
+- JPG, PNG and BMP image support
+- 3x3, 4x4 and 5x5 puzzle grids
+- Image resizing and preparation for the selected grid
 - Random Swap, Rotate and Flip transformations
-- Transformation counts: 6 / 12 / 20 for 3x3 / 4x4 / 5x5
+- 6 transformations for 3x3
+- 12 transformations for 4x4
+- 20 transformations for 5x5
 - Original and scrambled images displayed side by side
-- Left click to select/swap
-- Right click to rotate clockwise
-- Shift + left click to flip horizontally
-- Correct-tile green ticks
-- Move and incorrect-tile counters
-- Maximum 3 hints per image
+- Tile selection and swapping
+- Right-click rotation
+- Shift + left-click horizontal flipping
+- Green indicators for correctly placed tiles
+- Move counter
+- Incorrect tile counter
+- Maximum of three hints per image
 - Solve button
-- Completion notification and input lock
+- Completion notification
+- Puzzle input locked after completion
 
-## Installation
+## Project Structure
 
-```bash
-pip install opencv-python pillow numpy
-```
-
-Tkinter is normally included with Python on Windows.
-
-## Run
-
-```bash
-python assignment3.py
-```
-
-## Submission
-
-Zip:
-- assignment3.py
-- github_link.txt
-- optional Word document if required by the group
-
-The GitHub repository must be public and include the group members.
+```text
+HIT137-Assignment-3/
+|
++-- assignment.py
++-- gui.py
++-- image_processing.py
++-- puzzle.py
++-- transformations.py
++-- test_puzzle.py
++-- github_link.txt
++-- README.md
