@@ -1,46 +1,75 @@
-# HIT137 Group Assignment 3
-
-## Image Scramble Puzzle
+# HIT137 Group Assignment 3 — Image Scramble Puzzle
 
 A desktop image-scramble puzzle developed for HIT137 Group Assignment 3.
 
-The application uses Python, Tkinter, OpenCV and NumPy. The project demonstrates
-object-oriented programming, image processing and graphical user interaction.
+The application uses Python, Tkinter, OpenCV, NumPy and Pillow. It demonstrates
+object-oriented programming, image processing, GUI development and
+inheritance/polymorphism through transformation classes.
 
 ## Features
 
-- Object-oriented design using classes and inheritance
-- Encapsulation of puzzle and tile state
-- Polymorphism through tile transformation classes
-- JPG, PNG and BMP image support
-- 3x3, 4x4 and 5x5 puzzle grids
-- Image resizing and preparation for the selected grid
+- JPG, JPEG, PNG and BMP image loading
+- 3x3, 4x4 and 5x5 grid selection before loading
+- OpenCV resizing and even grid preparation
 - Random Swap, Rotate and Flip transformations
-- 6 transformations for 3x3
-- 12 transformations for 4x4
-- 20 transformations for 5x5
+- 6 transformations for 3x3, 12 for 4x4 and 20 for 5x5
+- Every scramble transformation is generated before application
+- No tile is targeted more than once during a scramble
 - Original and scrambled images displayed side by side
-- Tile selection and swapping
-- Right-click rotation
-- Shift + left-click horizontal flipping
-- Green indicators for correctly placed tiles
-- Move counter
-- Incorrect tile counter
+- Faint grid drawn only over the transformed image
+- Left-click selection and tile swapping
+- Right-click 90-degree clockwise rotation
+- Shift + left-click horizontal flip
+- Green indicators for correctly placed/oriented tiles
+- Moves and incorrect-tile counters
 - Maximum of three hints per image
-- Solve button
-- Completion notification
-- Puzzle input locked after completion
+- Hints shown on both the current and home positions
+- Hints disappear after the next actual move
+- Completion notification and input lock
+- Solve button that restores the puzzle and clears moves
 
 ## Project Structure
 
 ```text
 HIT137-Assignment-3/
-|
-+-- assignment.py
-+-- gui.py
-+-- image_processing.py
-+-- puzzle.py
-+-- transformations.py
-+-- test_puzzle.py
-+-- github_link.txt
-+-- README.md
+├── assignment.py
+├── gui.py
+├── image_processing.py
+├── puzzle.py
+├── transformations.py
+├── test_puzzle.py
+├── test_integration.py
+├── github_link.txt
+└── README.md
+```
+
+## Requirements
+
+Install the required packages:
+
+```bash
+pip install opencv-python numpy pillow
+```
+
+Tkinter is included with standard Python installations on Windows.
+
+## Run the application
+
+From the project folder:
+
+```bash
+python assignment.py
+```
+
+## Run the tests
+
+```bash
+python test_puzzle.py
+python test_integration.py
+```
+
+Both test files should finish with:
+
+```text
+ALL TESTS PASSED!
+```
