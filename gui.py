@@ -161,6 +161,7 @@ class PuzzleApp:
                 ("JPEG", "*.jpg *.jpeg"),
                 ("PNG", "*.png"),
                 ("Bitmap", "*.bmp"),
+                ("All files", "*.*"),
             ],
         )
         if not path:
