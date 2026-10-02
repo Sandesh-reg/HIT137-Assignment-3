@@ -4,6 +4,8 @@ Tkinter GUI for HIT137 Assignment 3.
 
 import os
 import tkinter as tk
+
+import numpy as np
 from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageTk
@@ -225,7 +227,7 @@ class PuzzleApp:
         for row in range(n):
             start = row * n
             rows.append(
-                __import__("numpy").hstack(
+                np.hstack(
                     [
                         self.puzzle.tiles[start + column].image
                         for column in range(n)
@@ -233,7 +235,7 @@ class PuzzleApp:
                 )
             )
 
-        return __import__("numpy").vstack(rows)
+        return np.vstack(rows)
 
     def _render(self):
         """Render images, grid, selection, hints and correct-tile ticks."""
