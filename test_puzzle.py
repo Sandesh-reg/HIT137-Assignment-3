@@ -1,261 +1,166 @@
 """
-Tests for the Puzzle and transformation classes.
+Tests for the HIT137 Assignment 3 puzzle logic and transformations.
 """
 
 import numpy as np
 
 from puzzle import Puzzle, Tile
 from transformations import (
-    RotateTransformation,
     FlipTransformation,
+    RotateTransformation,
     SwapTransformation,
-    TileTransformation
+    TileTransformation,
 )
 
 
 def create_test_puzzle(size):
-    """Create a puzzle using test images."""
-
+    """Create deterministic test tiles."""
     puzzle = Puzzle(size)
     tiles = []
 
     for number in range(size * size):
-        image = np.zeros(
-            (20, 20, 3),
-            dtype=np.uint8
-        )
-
+        image = np.zeros((20, 20, 3), dtype=np.uint8)
         image[:, :10] = number + 10
         image[:10, :] = number + 20
-
-        tiles.append(
-            Tile(number, image)
-        )
+        tiles.append(Tile(number, image))
 
     puzzle.set_tiles(tiles)
-
     return puzzle
 
 
-puzzle = create_test_puzzle(3)
-assert puzzle.grid_size == 3
-assert puzzle.tile_count == 9
+def test_grid_sizes():
+    for size in (3, 4, 5):
+        puzzle = create_test_puzzle(size)
+        assert puzzle.grid_size == size
+        assert puzzle.tile_count == size * size
 
-puzzle = create_test_puzzle(4)
-assert puzzle.grid_size == 4
-assert puzzle.tile_count == 16
 
-puzzle = create_test_puzzle(5)
-assert puzzle.grid_size == 5
-assert puzzle.tile_count == 25
+def test_move_counter():
+    puzzle = create_test_puzzle(3)
+    assert puzzle.moves == 0
 
-print("✓ Grid size tests passed")
+    puzzle.swap(0, 1)
+    puzzle.rotate(0)
+    puzzle.flip(0)
 
+    assert puzzle.moves == 3
 
-puzzle = create_test_puzzle(3)
 
-assert puzzle.moves == 0
+def test_transformations():
+    puzzle = create_test_puzzle(3)
 
-puzzle.swap(0, 1)
-assert puzzle.moves == 1
+    original = puzzle.tiles[0].image.copy()
+    RotateTransformation(90).apply(puzzle.tiles, 0)
+    assert not np.array_equal(puzzle.tiles[0].image, original)
 
-puzzle.rotate(0)
-assert puzzle.moves == 2
+    puzzle = create_test_puzzle(3)
+    original = puzzle.tiles[0].image.copy()
+    FlipTransformation("horizontal").apply(puzzle.tiles, 0)
+    assert not np.array_equal(puzzle.tiles[0].image, original)
+
+    puzzle = create_test_puzzle(3)
+    first_id = puzzle.tiles[0].tile_id
+    second_id = puzzle.tiles[1].tile_id
+    SwapTransformation().apply(puzzle.tiles, 0, 1)
+    assert puzzle.tiles[0].tile_id == second_id
+    assert puzzle.tiles[1].tile_id == first_id
 
-puzzle.flip(0)
-assert puzzle.moves == 3
 
-print("✓ Move counter tests passed")
+def test_inheritance():
+    assert isinstance(RotateTransformation(90), TileTransformation)
+    assert isinstance(FlipTransformation("horizontal"), TileTransformation)
+    assert isinstance(SwapTransformation(), TileTransformation)
 
 
-puzzle = create_test_puzzle(3)
+def test_transformation_options():
+    assert RotateTransformation(90).angle == 90
+    assert RotateTransformation(180).angle == 180
+    assert RotateTransformation(270).angle == 270
 
-original_image = puzzle.tiles[0].image.copy()
+    assert FlipTransformation("horizontal").direction == "horizontal"
+    assert FlipTransformation("vertical").direction == "vertical"
 
-RotateTransformation(90).apply(
-    puzzle.tiles,
-    0
-)
 
-assert not np.array_equal(
-    puzzle.tiles[0].image,
-    original_image
-)
+def test_scramble_counts_and_unique_targets():
+    for size, expected_count in ((3, 6), (4, 12), (5, 20)):
+        puzzle = create_test_puzzle(size)
+        puzzle.scramble()
 
-print("✓ Rotation transformation test passed")
+        assert len(puzzle.scramble_plan) == expected_count
+        assert {item[0] for item in puzzle.scramble_plan} == {
+            "swap",
+            "rotate",
+            "flip",
+        }
 
+        involved = []
+        for item in puzzle.scramble_plan:
+            if item[0] == "swap":
+                involved.extend(item[1:3])
+            else:
+                involved.append(item[1])
 
-puzzle = create_test_puzzle(3)
+        assert len(involved) == len(set(involved))
+        assert not puzzle.is_solved()
 
-original_image = puzzle.tiles[0].image.copy()
 
-FlipTransformation("horizontal").apply(
-    puzzle.tiles,
-    0
-)
+def test_hints():
+    puzzle = create_test_puzzle(3)
+    puzzle.swap(0, 1)
 
-assert not np.array_equal(
-    puzzle.tiles[0].image,
-    original_image
-)
+    assert puzzle.get_hint() is not None
+    assert puzzle.get_hint() is not None
+    assert puzzle.get_hint() is not None
+    assert puzzle.hints_used == 3
+    assert puzzle.get_hint() is None
+    assert puzzle.hints_used == 3
 
-print("✓ Flip transformation test passed")
+    assert puzzle.hint_positions is not None
+    puzzle.rotate(0)
+    assert puzzle.hint_positions is None
 
 
-puzzle = create_test_puzzle(3)
+def test_solve():
+    puzzle = create_test_puzzle(3)
+    puzzle.swap(0, 1)
+    puzzle.rotate(0)
+    puzzle.flip(0)
 
-first_tile_id = puzzle.tiles[0].tile_id
-second_tile_id = puzzle.tiles[1].tile_id
+    assert puzzle.moves == 3
 
-SwapTransformation().apply(
-    puzzle.tiles,
-    0,
-    1
-)
+    puzzle.solve()
 
-assert puzzle.tiles[0].tile_id == second_tile_id
-assert puzzle.tiles[1].tile_id == first_tile_id
+    assert puzzle.is_solved()
+    assert puzzle.moves == 0
+    assert puzzle.finished is True
+    assert puzzle.hint_positions is None
 
-print("✓ Swap transformation test passed")
 
+def test_invalid_grid_size():
+    for size in (2, 6):
+        try:
+            Puzzle(size)
+            raise AssertionError("Invalid grid size was accepted.")
+        except ValueError:
+            pass
 
-rotate = RotateTransformation(90)
-flip = FlipTransformation("horizontal")
-swap = SwapTransformation()
 
-assert isinstance(
-    rotate,
-    TileTransformation
-)
+if __name__ == "__main__":
+    tests = [
+        test_grid_sizes,
+        test_move_counter,
+        test_transformations,
+        test_inheritance,
+        test_transformation_options,
+        test_scramble_counts_and_unique_targets,
+        test_hints,
+        test_solve,
+        test_invalid_grid_size,
+    ]
 
-assert isinstance(
-    flip,
-    TileTransformation
-)
+    for test_function in tests:
+        test_function()
 
-assert isinstance(
-    swap,
-    TileTransformation
-)
+    print("ALL TESTS PASSED!")
 
-print("✓ OOP inheritance tests passed")
 
-
-rotation_90 = RotateTransformation(90)
-rotation_180 = RotateTransformation(180)
-rotation_270 = RotateTransformation(270)
-
-assert rotation_90.angle == 90
-assert rotation_180.angle == 180
-assert rotation_270.angle == 270
-
-print("✓ Rotation angle tests passed")
-
-
-horizontal_flip = FlipTransformation(
-    "horizontal"
-)
-
-vertical_flip = FlipTransformation(
-    "vertical"
-)
-
-assert horizontal_flip.direction == "horizontal"
-assert vertical_flip.direction == "vertical"
-
-print("✓ Flip direction tests passed")
-
-
-puzzle = create_test_puzzle(3)
-
-puzzle.swap(0, 1)
-puzzle.moves = 0
-
-hint1 = puzzle.get_hint()
-hint2 = puzzle.get_hint()
-hint3 = puzzle.get_hint()
-
-assert hint1 is not None
-assert hint2 is not None
-assert hint3 is not None
-assert puzzle.hints_used == 3
-
-print("✓ Three-hint limit test passed")
-
-
-hint4 = puzzle.get_hint()
-
-assert hint4 is None
-assert puzzle.hints_used == 3
-
-print("✓ Fourth hint correctly disabled")
-
-
-puzzle = create_test_puzzle(3)
-
-puzzle.swap(0, 1)
-puzzle.moves = 0
-
-hint = puzzle.get_hint()
-
-assert hint is not None
-assert puzzle.hint_positions is not None
-
-puzzle.rotate(0)
-
-assert puzzle.hint_positions is None
-
-print("✓ Hint reset after move test passed")
-
-
-puzzle = create_test_puzzle(3)
-
-puzzle.swap(0, 1)
-puzzle.rotate(0)
-puzzle.flip(0)
-
-assert puzzle.moves == 3
-
-puzzle.solve()
-
-assert puzzle.is_solved()
-assert puzzle.moves == 0
-assert puzzle.finished is True
-assert puzzle.hint_positions is None
-
-print("✓ Solve tests passed")
-
-
-for size, expected_transformations in [
-    (3, 6),
-    (4, 12),
-    (5, 20)
-]:
-    puzzle = create_test_puzzle(size)
-
-    puzzle.scramble()
-
-    assert not puzzle.is_solved()
-
-    print(
-        f"✓ {size}x{size} scramble test passed "
-        f"({expected_transformations} transformations)"
-    )
-
-
-try:
-    Puzzle(2)
-    raise AssertionError("Invalid grid size was accepted.")
-except ValueError:
-    pass
-
-try:
-    Puzzle(6)
-    raise AssertionError("Invalid grid size was accepted.")
-except ValueError:
-    pass
-
-print("✓ Invalid grid size tests passed")
-
-print()
-print("ALL TESTS PASSED!")
