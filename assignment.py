@@ -1,16 +1,5 @@
-"""
-HIT137 Group Assignment 3
-Image Scramble Puzzle
-Uses Tkinter for GUI and OpenCV for image processing.
-
-Requirements:
-    pip install opencv-python pillow numpy
-
-Run:
-    python assignment3.py
-"""
-
 import copy
+import os
 import random
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -20,9 +9,8 @@ import numpy as np
 from PIL import Image, ImageTk
 
 
-# ---------------------------------------------------------------------------
+
 # OOP: Inheritance + Polymorphism
-# ---------------------------------------------------------------------------
 
 class TileTransformation:
     """Base class for a tile transformation."""
@@ -80,9 +68,7 @@ class SwapTransformation(TileTransformation):
         tile.history.append("swap")
 
 
-# ---------------------------------------------------------------------------
 # Tile model
-# ---------------------------------------------------------------------------
 
 class Tile:
     """Represents one puzzle tile and its target position."""
@@ -107,9 +93,8 @@ class Tile:
         self.history.clear()
 
 
-# ---------------------------------------------------------------------------
 # Puzzle model
-# ---------------------------------------------------------------------------
+
 
 class Puzzle:
     """Stores puzzle state, transformations, moves and hint information."""
@@ -284,10 +269,7 @@ class Puzzle:
         return self.hint_positions
 
 
-# ---------------------------------------------------------------------------
 # Tkinter GUI
-# ---------------------------------------------------------------------------
-
 class PuzzleApp:
     """Tkinter desktop interface for the image puzzle."""
 
