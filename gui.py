@@ -32,6 +32,8 @@ class PuzzleApp:
         self.puzzle_photo = None
         self.original_bounds = None
         self.puzzle_bounds = None
+        self.processor_image = None
+        self.current_image_path = None
 
         self._build_gui()
         self._update_controls()
@@ -171,6 +173,7 @@ class PuzzleApp:
             grid_size = self.grid_var.get()
             image, tiles = self.processor.process(path, grid_size)
 
+            self.processor_image = image
             self.puzzle = Puzzle(grid_size)
             self.puzzle.set_tiles(tiles)
             self.puzzle.scramble()
